@@ -33,7 +33,15 @@ const EXAMPLE_SEARCH_RESULTS = {results:[{
 //
 //You can test this function by passing it one of the above array items
 //(e.g., `EXAMPLE_SEARCH_RESULTS.results[0]).
+function renderTrack(trackObj) {
+  let trackImg = document.createElement('img');
+  trackImg.src = trackObj.artworkUrl100;
+  trackImg.alt = trackObj.trackName;
+  trackImg.title = trackObj.trackName;
 
+  let recordsDiv = document.querySelector('#records');
+  recordsDiv.appendChild(trackImg);
+} 
 
 
 //Define a function `renderSearchResults()` that takes in an object with a
@@ -44,7 +52,18 @@ const EXAMPLE_SEARCH_RESULTS = {results:[{
 //"clear" the previously displayed results first!
 //
 //You can test this function by passing it the `EXAMPLE_SEARCH_RESULTS` object.
-
+function renderSearchResults(resultsObj) {
+  let recordsDiv = document.querySelector('#records');
+  recordsDiv.innerHTML = '';
+  if(resultsObj.results.length == 0) {  //renderError(2)
+    let error = new Error("No results found");
+    renderError(error);
+  }
+  resultsObj.results.forEach(function(trackObj) {
+    renderTrack(trackObj);
+  })
+}
+renderSearchResults(EXAMPLE_SEARCH_RESULTS);
 
 
 //Now it's the time to practice using `fetch()`! First, modify the `index.html`
@@ -68,22 +87,63 @@ const EXAMPLE_SEARCH_RESULTS = {results:[{
 //You can test this function by calling the method and passing it the name of 
 //your favorite band (you CANNOT test it with the search button yet!)
 const URL_TEMPLATE = "https://itunes.apple.com/search?entity=song&limit=25&term={searchTerm}";
+function fetchTrackList(searchTerm) {
+  let uri = URL_TEMPLATE.replace('{searchTerm}', searchTerm);
 
+  toggleSpinner();
 
+  let ticket = fetch(uri) //sends request
+    .then(function(response) { //when number is called
+      return response.json();
+    }).then(function(data) {
+      renderSearchResults(data);
+    }).catch(function(error) { //catch anything that gets dropped
+      renderError(error);
+    }).then(function() {
+      toggleSpinner();
+    })
+  return ticket;
+}
+
+// function fetchTrackList(searchTerm) {
+//   let uri = URL_TEMPLATE.replace('{searchTerm}', searchTerm);
+  
+//   let fetchPromise = fetch(uri);
+//   let updatedPromise = fetchPromise.then(function(response) { //do this function when number is called
+//     let encodePromise = response.json(); //extract/encode the body
+//     return encodePromise;
+//   })
+//   updatedPromise.then(function(data) {
+//     console.log(data);
+//   });
+
+//   console.log("after the fetch call");
+// }
 
 
 //Add an event listener to the "search" button so that when it is clicked (and 
-//the the form is submitted) your `fetchTrackList()` function is called with the
+//then the form is submitted) your `fetchTrackList()` function is called with the
 //user-entered `#searchQuery` value. Use the `preventDefault()` function to keep
 //the form from being submitted as usual (and navigating to a different page).
+document.querySelector('button').addEventListener('click', function(event) {
+  event.preventDefault(); //don't do your thing, do my thing (block everything(browser normal behavior))
 
+  let searchValue = document.querySelector('#searchQuery').value;
+  //console.log('search for', searchValue);
+  fetchTrackList(searchValue);
+});
 
 
 //Next, add some error handling to the page. Define a function `renderError()`
 //that takes in an "Error object" and displays that object's `message` property
 //on the page. Display this by creating a `<p class="alert alert-danger">` and
 //placing that alert inside the `#records` element.
-
+function renderError(errObj) {
+  let alert = document.createElement('p');
+  alert.classList.add('alert', 'alert-danger');
+  alert.textContent = errObj.message;
+  document.querySelector('#records').appendChild(alert);
+}
 
 
 //Add the error handing to your program in two ways:
@@ -107,7 +167,10 @@ const URL_TEMPLATE = "https://itunes.apple.com/search?entity=song&limit=25&term=
 //spinner (show it) BEFORE you send the AJAX request, and toggle it back off
 //after the ENTIRE request is completed (including after any error catching---
 //download the data and `catch()` the error, and `then()` show the spinner.
-
+function toggleSpinner() {
+  let spinner = document.querySelector('.fa-spinner');
+  spinner.classList.toggle('d-none');
+}
 
 
 
